@@ -1,8 +1,3 @@
-/**
- * Alipay.com Inc.
- * Copyright (c) 2004-2020 All Rights Reserved.
- */
-
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import lombok.Setter;
@@ -12,10 +7,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Queue;
 
-/**
- * @author feisi.fs
- * @version $Id: ShelfImpl, v0.1 2020Äê11ÔÂ28ÈÕ 10:26 PM feisi.fs Exp $
- */
 @Setter
 public class ShelfImpl extends Thread implements Shelf {
 	private static final Logger logger = LoggerFactory.getLogger(ShelfImpl.class);

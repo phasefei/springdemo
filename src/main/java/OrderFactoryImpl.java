@@ -1,18 +1,9 @@
-/**
- * Alipay.com Inc.
- * Copyright (c) 2004-2020 All Rights Reserved.
- */
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-/**
- * @author feisi.fs
- * @version $Id: OrderFactoryImpl, v0.1 2020Äê11ÔÂ28ÈÕ 2:50 PM feisi.fs Exp $
- */
 public class OrderFactoryImpl implements OrderFactory {
 	private static final ObjectMapper mapper = new ObjectMapper();
 	private static final Logger logger = LoggerFactory.getLogger(OrderFactoryImpl.class);

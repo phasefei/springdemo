@@ -1,16 +1,7 @@
-/**
- * Alipay.com Inc.
- * Copyright (c) 2004-2020 All Rights Reserved.
- */
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-/**
- * @author feisi.fs
- * @version $Id: ShelfItem, v0.1 2020Äê11ÔÂ28ÈÕ 10:08 PM feisi.fs Exp $
- */
 @Getter
 @Setter
 @ToString

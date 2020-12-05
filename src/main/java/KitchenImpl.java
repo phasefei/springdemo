@@ -1,8 +1,3 @@
-/**
- * Alipay.com Inc.
- * Copyright (c) 2004-2020 All Rights Reserved.
- */
-
 import com.google.common.util.concurrent.RateLimiter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -11,10 +6,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Random;
 
-/**
- * @author feisi.fs
- * @version $Id: KitchenImpl, v0.1 2020Äê11ÔÂ28ÈÕ 3:52 PM feisi.fs Exp $
- */
 @Setter
 public class KitchenImpl implements Kitchen {
 	private static final Logger logger = LoggerFactory.getLogger(KitchenImpl.class);
