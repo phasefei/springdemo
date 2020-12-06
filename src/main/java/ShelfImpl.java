@@ -58,18 +58,14 @@ public class ShelfImpl extends Thread implements Shelf {
 							slots[i] = ShelfSlotStatus.ASSIGNED;
 							availableQ.offer(i);
 
-							shelfStat.merge("waste", 1, (v1, v2) -> v1 + v2);
-							ordersStat.delOrder(items[i].getOrder());
-							logger.info("waste {}", items[i]);
+							statAndLog("waste", items[i]);
 						} else {
 							long ttd = items[i].getTimeToDeliver();
 							if (ttd <= 0) {
 								slots[i] = ShelfSlotStatus.ASSIGNED;
 								availableQ.offer(i);
 
-								shelfStat.merge("deliver", 1, (v1, v2) -> v1 + v2);
-								ordersStat.delOrder(items[i].getOrder());
-								logger.info("deliver {}", items[i]);
+								statAndLog("deliver", items[i]);
 							} else {
 								if (ttw < ttwMin) {
 									ttwMin = ttw;
@@ -87,9 +83,7 @@ public class ShelfImpl extends Thread implements Shelf {
 				slots[runtIndex] = ShelfSlotStatus.ASSIGNED;
 				items[runtIndex].update(decayModifier);
 
-				shelfStat.merge("discard", 1, (v1, v2) -> v1 + v2);
-				ordersStat.delOrder(items[runtIndex].getOrder());
-				logger.info("discard {}", items[runtIndex]);
+				statAndLog("discard", items[runtIndex]);
 
 				waitSlot = false;
 			}
@@ -129,5 +123,11 @@ public class ShelfImpl extends Thread implements Shelf {
 		} catch (Exception e) {
 			logger.warn(e.toString());
 		}
+	}
+
+	private void statAndLog(String action, ShelfItem item) {
+		shelfStat.merge(action, 1, (v1, v2) -> v1 + v2);
+		ordersStat.delOrder(item.getOrder());
+		logger.info("{} {}", action, item);
 	}
 }
