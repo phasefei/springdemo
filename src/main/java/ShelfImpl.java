@@ -24,6 +24,8 @@ public class ShelfImpl extends Thread implements Shelf {
 
 	private Map<String, Integer> shelfStat = Maps.newHashMap();
 
+	private OrdersStat ordersStat;
+
 	public void init() {
 		items = new ShelfItem[capacity];
 		slots = new ShelfSlotStatus[capacity];
@@ -55,6 +57,7 @@ public class ShelfImpl extends Thread implements Shelf {
 							slots[i] = ShelfSlotStatus.ASSIGNED;
 							availableQ.offer(i);
 							shelfStat.merge("waste", 1, (v1, v2) -> v1 + v2);
+							ordersStat.delOrder(items[i].getOrder());
 							logger.info("waste {}", items[i]);
 						} else {
 							long ttd = items[i].getTimeToDeliver();
@@ -62,6 +65,7 @@ public class ShelfImpl extends Thread implements Shelf {
 								slots[i] = ShelfSlotStatus.ASSIGNED;
 								availableQ.offer(i);
 								shelfStat.merge("deliver", 1, (v1, v2) -> v1 + v2);
+								ordersStat.delOrder(items[i].getOrder());
 								logger.info("deliver {}", items[i]);
 							} else {
 								if (ttw < ttwMin) {
@@ -84,6 +88,7 @@ public class ShelfImpl extends Thread implements Shelf {
 			if (enforcePlace) {
 				index = runtIndex;
 				shelfStat.merge("discard", 1, (v1, v2) -> v1 + v2);
+				ordersStat.delOrder(items[index].getOrder());
 				logger.info("discard {}", items[index]);
 			} else {
 				return false;
