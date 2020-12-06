@@ -21,6 +21,7 @@ public class ShelfImpl extends Thread implements Shelf {
 	private volatile ShelfItem[] items;
 	private volatile ShelfSlotStatus[] slots;
 	private volatile boolean stopFlag = false;
+	private volatile boolean waitSlot = false;
 
 	private Map<String, Integer> shelfStat = Maps.newHashMap();
 
@@ -56,6 +57,7 @@ public class ShelfImpl extends Thread implements Shelf {
 						if (ttw <= 0) {
 							slots[i] = ShelfSlotStatus.ASSIGNED;
 							availableQ.offer(i);
+
 							shelfStat.merge("waste", 1, (v1, v2) -> v1 + v2);
 							ordersStat.delOrder(items[i].getOrder());
 							logger.info("waste {}", items[i]);
@@ -64,6 +66,7 @@ public class ShelfImpl extends Thread implements Shelf {
 							if (ttd <= 0) {
 								slots[i] = ShelfSlotStatus.ASSIGNED;
 								availableQ.offer(i);
+
 								shelfStat.merge("deliver", 1, (v1, v2) -> v1 + v2);
 								ordersStat.delOrder(items[i].getOrder());
 								logger.info("deliver {}", items[i]);
@@ -77,7 +80,19 @@ public class ShelfImpl extends Thread implements Shelf {
 						break;
 				}
 			}
-			runtIndex = ttwMinIdx;
+
+			if (waitSlot) {
+				runtIndex = ttwMinIdx;
+
+				slots[runtIndex] = ShelfSlotStatus.ASSIGNED;
+				items[runtIndex].update(decayModifier);
+
+				shelfStat.merge("discard", 1, (v1, v2) -> v1 + v2);
+				ordersStat.delOrder(items[runtIndex].getOrder());
+				logger.info("discard {}", items[runtIndex]);
+
+				waitSlot = false;
+			}
 		}
 	}
 
@@ -86,10 +101,9 @@ public class ShelfImpl extends Thread implements Shelf {
 		Integer index = availableQ.poll();
 		if (index == null) {
 			if (enforcePlace) {
+				waitSlot = true;
+				while (waitSlot);
 				index = runtIndex;
-				shelfStat.merge("discard", 1, (v1, v2) -> v1 + v2);
-				ordersStat.delOrder(items[index].getOrder());
-				logger.info("discard {}", items[index]);
 			} else {
 				return false;
 			}
