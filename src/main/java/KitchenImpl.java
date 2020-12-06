@@ -25,10 +25,11 @@ public class KitchenImpl implements Kitchen {
 	@Override
 	public void receiveOrder(Order order) {
 		rateLimiter.acquire();
-		logger.info("receive an order, {}", order);
 
 		Integer courierDelay = courierDelayMin + random.nextInt(courierDelayMax - courierDelayMin + 1);
 		ShelfItem item = new ShelfItem(order, courierDelay);
+		logger.info("receive {}", order);
+
 		Shelf shelf = shelves.get(order.getTemp());
 		if (shelf == null) {
 			return;

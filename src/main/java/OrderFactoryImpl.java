@@ -32,9 +32,4 @@ public class OrderFactoryImpl implements OrderFactory {
 	public Order fetchOrder() {
 		return index < orders.size() ? orders.get(index++) : null;
 	}
-
-	public static void main(String[] args) {
-		OrderFactoryImpl orderFactory = new OrderFactoryImpl();
-		orderFactory.loadOrders("orders.json");
-	}
 }

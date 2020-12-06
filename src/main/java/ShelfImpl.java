@@ -15,11 +15,12 @@ public class ShelfImpl extends Thread implements Shelf {
 	private int capacity;
 	private int decayModifier;
 	private boolean enforcePlace = false;
+	private long sleepInterval = -1;
 
-	private Queue<Integer> availableQ = Queues.newConcurrentLinkedQueue();
+	protected Queue<Integer> availableQ = Queues.newConcurrentLinkedQueue();
 	private volatile Integer runtIndex = 0;
 	private volatile ShelfItem[] items;
-	private volatile ShelfSlotStatus[] slots;
+	protected volatile ShelfSlotStatus[] slots;
 	private volatile boolean stopFlag = false;
 	private volatile boolean waitSlot = false;
 
@@ -41,9 +42,7 @@ public class ShelfImpl extends Thread implements Shelf {
 	@Override
 	public void run() {
 		for (; !stopFlag || availableQ.size() != capacity;) {
-			double ttwMin = Double.MAX_VALUE;
-			Integer ttwMinIdx = 0;
-			for (int i = 0; i < items.length; i++) {
+			for (int i = 0; i < capacity; i++) {
 				switch (slots[i]) {
 					case AVAILABLE:
 						slots[i] = ShelfSlotStatus.ASSIGNED;
@@ -53,50 +52,68 @@ public class ShelfImpl extends Thread implements Shelf {
 						break;
 					case USING:
 						items[i].update(decayModifier);
-						double ttw = items[i].getTimeToWaste();
-						if (ttw <= 0) {
+						if (items[i].getTimeToWaste() <= 0) {
+							statAndLog("waste", items[i], true);
 							slots[i] = ShelfSlotStatus.ASSIGNED;
 							availableQ.offer(i);
-
-							statAndLog("waste", items[i]);
 						} else {
-							long ttd = items[i].getTimeToDeliver();
-							if (ttd <= 0) {
+							if (items[i].getTimeToDeliver() <= 0) {
+								statAndLog("deliver", items[i], true);
 								slots[i] = ShelfSlotStatus.ASSIGNED;
 								availableQ.offer(i);
-
-								statAndLog("deliver", items[i]);
 							} else {
-								if (ttw < ttwMin) {
-									ttwMin = ttw;
-									ttwMinIdx = i;
-								}
+								addToMoves(items[i], i);
 							}
 						}
 						break;
 				}
 			}
 
+			Integer ttwMinIdx = moveItems();
 			if (waitSlot) {
 				runtIndex = ttwMinIdx;
 
-				slots[runtIndex] = ShelfSlotStatus.ASSIGNED;
-				items[runtIndex].update(decayModifier);
+				logger.info("---------- discard print begin ----------");
+				for (int i = 0; i < capacity; i++) {
+					logger.info("{}", items[i]);
+				}
+				logger.info("---------- discard print end ----------");
 
-				statAndLog("discard", items[runtIndex]);
+				statAndLog("discard", items[runtIndex], true);
+				slots[runtIndex] = ShelfSlotStatus.ASSIGNED;
 
 				waitSlot = false;
+			}
+
+			try {
+				if (sleepInterval >= 0) {
+					Thread.sleep(sleepInterval);
+				}
+			} catch (InterruptedException e) {
+				logger.warn(e.toString());
 			}
 		}
 	}
 
 	@Override
 	public boolean place(ShelfItem item) {
+		if (item.getTargetShelf() == null) {
+			item.setTargetShelf(this);
+		}
+
 		Integer index = availableQ.poll();
 		if (index == null) {
 			if (enforcePlace) {
 				waitSlot = true;
-				while (waitSlot);
+				while (waitSlot) {
+					try {
+						if (sleepInterval >= 0) {
+							Thread.sleep(sleepInterval);
+						}
+					} catch (InterruptedException e) {
+						logger.warn(e.toString());
+					}
+				}
 				index = runtIndex;
 			} else {
 				return false;
@@ -120,14 +137,23 @@ public class ShelfImpl extends Thread implements Shelf {
 			join();
 			logger.info("wait shelf [{}] exit, total={}, {}",
 					shelfName, shelfStat.values().stream().mapToInt(v -> v).sum(), shelfStat.toString());
-		} catch (Exception e) {
+		} catch (InterruptedException e) {
 			logger.warn(e.toString());
 		}
 	}
 
-	private void statAndLog(String action, ShelfItem item) {
+	protected void statAndLog(String action, ShelfItem item, boolean del) {
 		shelfStat.merge(action, 1, (v1, v2) -> v1 + v2);
-		ordersStat.delOrder(item.getOrder());
+		if (del) {
+			ordersStat.delOrder(item.getOrder());
+		}
 		logger.info("{} {}", action, item);
+	}
+
+	public void addToMoves(ShelfItem item, int index) {
+	}
+
+	public Integer moveItems() {
+		return null;
 	}
 }

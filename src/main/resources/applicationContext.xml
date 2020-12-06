@@ -35,25 +35,29 @@
         <property name="shelfName" value="hotShelf"/>
         <property name="capacity" value="10"/>
         <property name="decayModifier" value="1"/>
+        <property name="sleepInterval" value="${loop.sleepInterval}"/>
         <property name="ordersStat" ref="ordersStat"/>
     </bean>
     <bean class="ShelfImpl" id="cold" init-method="init">
         <property name="shelfName" value="coldShelf"/>
         <property name="capacity" value="10"/>
         <property name="decayModifier" value="1"/>
+        <property name="sleepInterval" value="${loop.sleepInterval}"/>
         <property name="ordersStat" ref="ordersStat"/>
     </bean>
     <bean class="ShelfImpl" id="frozen" init-method="init">
         <property name="shelfName" value="frozenShelf"/>
         <property name="capacity" value="10"/>
         <property name="decayModifier" value="1"/>
+        <property name="sleepInterval" value="${loop.sleepInterval}"/>
         <property name="ordersStat" ref="ordersStat"/>
     </bean>
-    <bean class="ShelfImpl" id="overflow" init-method="init">
+    <bean class="OverflowShelfImpl" id="overflow" init-method="init">
         <property name="shelfName" value="overflowShelf"/>
         <property name="capacity" value="5"/>
         <property name="decayModifier" value="2"/>
         <property name="enforcePlace" value="true"/>
+        <property name="sleepInterval" value="${loop.sleepInterval}"/>
         <property name="ordersStat" ref="ordersStat"/>
     </bean>
 
