@@ -6,6 +6,7 @@ import java.util.Queue;
 
 public class OverflowShelfImpl extends ShelfImpl {
 	private Map<String, Queue<ShelfItem>> moves = Maps.newHashMap();
+	private Queue<ShelfItem> tmpQ = Queues.newPriorityQueue();
 
 	@Override
 	public void addToMoves(ShelfItem item, int index) {
@@ -21,12 +22,12 @@ public class OverflowShelfImpl extends ShelfImpl {
 
 	@Override
 	public Integer moveItems() {
-		Queue<ShelfItem> tmpQ = Queues.newPriorityQueue();
+		tmpQ.clear();
 		moves.values().forEach(q -> {
 			for (ShelfItem item = q.poll(); item != null; item = q.poll()) {
 				if (item.getTargetShelf().place(item)) {
 					statAndLog("move", item, false);
-					slots[item.getTmpIndex()] = ShelfSlotStatus.ASSIGNED;
+					slots[item.getTmpIndex()] = ShelfSlotStatus.AVAILABLE;
 					availableQ.offer(item.getTmpIndex());
 				} else {
 					tmpQ.offer(item);

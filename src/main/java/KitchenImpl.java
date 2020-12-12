@@ -15,6 +15,7 @@ public class KitchenImpl implements Kitchen {
 	private Double receiveRate = 2.0;
 	private Integer courierDelayMin = 2;
 	private Integer courierDelayMax = 6;
+	/** normal shelves, hot / cold / frozen */
 	private Map<String, Shelf> shelves;
 	private Shelf overflowShelf;
 
@@ -34,6 +35,7 @@ public class KitchenImpl implements Kitchen {
 		if (shelf == null) {
 			return;
 		}
+		// places an order on the right shelf if possible or place on the overflow shelf
 		if (!shelf.place(item)) {
 			overflowShelf.place(item);
 		}

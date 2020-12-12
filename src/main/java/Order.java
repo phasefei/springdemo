@@ -2,6 +2,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * The type Order.
+ * Maps the order structure from json file
+ */
 @Getter
 @Setter
 @ToString

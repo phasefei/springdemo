@@ -14,10 +14,14 @@ public class ShelfImpl extends Thread implements Shelf {
 	private String shelfName;
 	private int capacity;
 	private int decayModifier;
+	/** overflow shelf must accept an order */
 	private boolean enforcePlace = false;
+	/** loop break control */
 	private long sleepInterval = -1;
 
+	/** available shelf slots */
 	protected Queue<Integer> availableQ = Queues.newConcurrentLinkedQueue();
+	/** index pointed to rottenest order on the shelf */
 	private volatile Integer runtIndex = 0;
 	private volatile ShelfItem[] items;
 	protected volatile ShelfSlotStatus[] slots;
@@ -32,34 +36,53 @@ public class ShelfImpl extends Thread implements Shelf {
 		items = new ShelfItem[capacity];
 		slots = new ShelfSlotStatus[capacity];
 		for (int i = 0; i < capacity; i++) {
-			slots[i] = ShelfSlotStatus.AVAILABLE;
+			slots[i] = ShelfSlotStatus.INITIAL;
 		}
 
 		setName(shelfName);
 		start();
 	}
 
+	/**
+	 * no operation for ordinary shelf
+	 * overflow shelf: collect orders in priority queues for later movement
+	 * @param item item
+	 * @param index slot index
+	 */
+	public void addToMoves(ShelfItem item, int index) {
+	}
+
+	/**
+	 * no operation for ordinary shelf
+	 * overflow shelf: moves orders to hot/cold/frozen shelf whenever possible, find the rottenest order
+	 * @return the index of rottenest order or null if not found
+	 */
+	public Integer moveItems() {
+		return null;
+	}
+
 	@Override
 	public void run() {
 		for (; !stopFlag || availableQ.size() != capacity;) {
+			// loop over the shelf items for delivering, rotting, discarding ...
 			for (int i = 0; i < capacity; i++) {
 				switch (slots[i]) {
-					case AVAILABLE:
-						slots[i] = ShelfSlotStatus.ASSIGNED;
+					case INITIAL:
+						slots[i] = ShelfSlotStatus.AVAILABLE;
 						availableQ.offer(i);
 						break;
-					case ASSIGNED:
+					case AVAILABLE:
 						break;
 					case USING:
 						items[i].update(decayModifier);
 						if (items[i].getTimeToWaste() <= 0) {
 							statAndLog("waste", items[i], true);
-							slots[i] = ShelfSlotStatus.ASSIGNED;
+							slots[i] = ShelfSlotStatus.AVAILABLE;
 							availableQ.offer(i);
 						} else {
 							if (items[i].getTimeToDeliver() <= 0) {
 								statAndLog("deliver", items[i], true);
-								slots[i] = ShelfSlotStatus.ASSIGNED;
+								slots[i] = ShelfSlotStatus.AVAILABLE;
 								availableQ.offer(i);
 							} else {
 								addToMoves(items[i], i);
@@ -70,8 +93,10 @@ public class ShelfImpl extends Thread implements Shelf {
 			}
 
 			Integer ttwMinIdx = moveItems();
+
+			// if it's an enforcement, hand out the available or rottenest order index
 			if (waitSlot) {
-				runtIndex = ttwMinIdx;
+				runtIndex = ttwMinIdx != null ? ttwMinIdx : availableQ.poll();
 
 				logger.info("---------- discard print begin ----------");
 				for (int i = 0; i < capacity; i++) {
@@ -80,7 +105,7 @@ public class ShelfImpl extends Thread implements Shelf {
 				logger.info("---------- discard print end ----------");
 
 				statAndLog("discard", items[runtIndex], true);
-				slots[runtIndex] = ShelfSlotStatus.ASSIGNED;
+				slots[runtIndex] = ShelfSlotStatus.AVAILABLE;
 
 				waitSlot = false;
 			}
@@ -102,10 +127,12 @@ public class ShelfImpl extends Thread implements Shelf {
 		}
 
 		Integer index = availableQ.poll();
+		// if currently there's no available slot
 		if (index == null) {
 			if (enforcePlace) {
+				// overflow shelf discards the rottenest order and store the new one
 				waitSlot = true;
-				while (waitSlot) {
+				while (waitSlot) { // wait for the signal
 					try {
 						if (sleepInterval >= 0) {
 							Thread.sleep(sleepInterval);
@@ -116,6 +143,7 @@ public class ShelfImpl extends Thread implements Shelf {
 				}
 				index = runtIndex;
 			} else {
+				// ordinary shelf can reject placement
 				return false;
 			}
 		}
@@ -148,12 +176,5 @@ public class ShelfImpl extends Thread implements Shelf {
 			ordersStat.delOrder(item.getOrder());
 		}
 		logger.info("{} {}", action, item);
-	}
-
-	public void addToMoves(ShelfItem item, int index) {
-	}
-
-	public Integer moveItems() {
-		return null;
 	}
 }

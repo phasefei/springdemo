@@ -1,5 +1,8 @@
 import lombok.Setter;
 
+/**
+ * The workhorse of order process
+ */
 @Setter
 public class OrderDispatcher extends Thread {
 	private String orderFile = "orders.json";
@@ -12,6 +15,9 @@ public class OrderDispatcher extends Thread {
 		setName(OrderDispatcher.class.getSimpleName());
 	}
 
+	/**
+	 * process all orders then stop the loop
+	 */
 	@Override
 	public void run() {
 		if (orderFactory.loadOrders(orderFile)) {
